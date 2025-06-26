@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kế hoạch số - Thực hiện kế hoạch</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .plan-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .milestone-card {
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .milestone-header {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .milestone-body {
+            padding: 15px;
+        }
+        .task-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #0d6efd;
+        }
+        .task-completed {
+            border-left-color: #28a745;
+            background-color: #f8fff8;
+        }
+        .task-item:hover {
+            background-color: #f0f7ff;
+        }
+        .chat-container {
+            height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 80%;
+        }
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+        .ai-message {
+            background-color: #e9ecef;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+        .chat-input {
+            border-top: 1px solid #ddd;
+            padding: 10px;
+            background-color: white;
+        }
+        .progress-chart {
+            height: 300px;
+        }
+        .active-milestone {
+            border-left: 5px solid #0d6efd;
+        }
+        .completed-milestone {
+            border-left: 5px solid #28a745;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">Kế hoạch số</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="create-plan.html">Tạo kế hoạch mới</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="username-display"></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-btn">Đăng xuất</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="plan-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 id="plan-title">Tiêu đề kế hoạch</h2>
+                <span class="badge bg-secondary" id="plan-status">Trạng thái</span>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <p id="plan-description">Mô tả kế hoạch</p>
+                            <div class="d-flex justify-content-between">
+                                <span class="badge bg-primary" id="plan-category">Lĩnh vực</span>
+                                <span class="badge" id="plan-difficulty">Độ khó</span>
+                                <span class="badge bg-info" id="plan-duration">Thời gian</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h4 class="mb-3">Các mốc quan trọng</h4>
+                    <div id="milestones-container">
+                        <!-- Milestones will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Tiến độ tổng thể</h5>
+                            <div class="progress-chart">
+                                <canvas id="progress-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Mục tiêu hàng ngày</h5>
+                            <ul id="daily-goals">
+                                <!-- Daily goals will be loaded here -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat modal -->
+            <div class="modal fade" id="taskChatModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="taskChatModalTitle">Báo cáo nhiệm vụ</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="chat-container">
+                                <div class="chat-messages" id="chat-messages">
+                                    <!-- Chat messages will appear here -->
+                                </div>
+                                <div class="chat-input">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="chat-input" placeholder="Nhập báo cáo của bạn...">
+                                        <button class="btn btn-primary" id="send-message-btn">Gửi</button>
+                                    </div>
+                                    <div class="mt-2">
+                                        <input type="file" id="file-upload" class="form-control form-control-sm">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-success" id="complete-task-btn">Hoàn thành nhiệm vụ</button>
+                            <button type="button" class="btn btn-danger" id="cancel-task-btn">Hủy nhiệm vụ</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase and other scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    
+    <script>
+        // Your Firebase configuration (same as index.html)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // DOM elements
+        const usernameDisplay = document.getElementById('username-display');
+        const logoutBtn = document.getElementById('logout-btn');
+        const planTitle = document.getElementById('plan-title');
+        const planDescription = document.getElementById('plan-description');
+        const planCategory = document.getElementById('plan-category');
+        const planDifficulty = document.getElementById('plan-difficulty');
+        const planDuration = document.getElementById('plan-duration');
+        const planStatus = document.getElementById('plan-status');
+        const milestonesContainer = document.getElementById('milestones-container');
+        const dailyGoals = document.getElementById('daily-goals');
+        const progressChartEl = document.getElementById('progress-chart');
+        
+        // Chat elements
+        const taskChatModal = new bootstrap.Modal(document.getElementById('taskChatModal'));
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const sendMessageBtn = document.getElementById('send-message-btn');
+        const fileUpload = document.getElementById('file-upload');
+        const completeTaskBtn = document.getElementById('complete-task-btn');
+        const cancelTaskBtn = document.getElementById('cancel-task-btn');
+        const taskChatModalTitle = document.getElementById('taskChatModalTitle');
+        
+        // Global variables
+        let currentPlan = null;
+        let currentPlanId = null;
+        let currentTask = null;
+        let currentMilestoneIndex = null;
+        let currentTaskIndex = null;
+        let progressChart = null;
+
+        // Auth state listener
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                usernameDisplay.textContent = user.displayName || user.email;
+                
+                // Get plan ID from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                currentPlanId = urlParams.get('planId');
+                
+                if (currentPlanId) {
+                    loadPlan(currentPlanId, user.uid);
+                } else {
+                    window.location.href = 'index.html';
+                }
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            auth.signOut();
+        });
+
+        // Load plan from Firestore
+        function loadPlan(planId, userId) {
+            db.collection('plans').doc(planId).onSnapshot(doc => {
+                if (doc.exists) {
+                    currentPlan = doc.data();
+                    displayPlan(currentPlan);
+                    
+                    // Check if plan belongs to current user
+                    if (currentPlan.userId !== userId) {
+                        window.location.href = 'index.html';
+                    }
+                } else {
+                    window.location.href = 'index.html';
+                }
+            });
+        }
+
+        // Display plan data
+        function displayPlan(plan) {
+            planTitle.textContent = plan.title;
+            planDescription.textContent = plan.description;
+            planCategory.textContent = plan.category;
+            planDifficulty.textContent = plan.difficulty === 'easy' ? 'Dễ' : 
+                                       plan.difficulty === 'medium' ? 'Trung bình' : 'Khó';
+            planDuration.textContent = plan.duration;
+            planStatus.textContent = plan.status === 'completed' ? 'Đã hoàn thành' : 'Đang thực hiện';
+            
+            // Set difficulty badge color
+            planDifficulty.className = 'badge ' + (
+                plan.difficulty === 'easy' ? 'bg-success' : 
+                plan.difficulty === 'medium' ? 'bg-warning' : 'bg-danger'
+            );
+            
+            // Set status badge color
+            planStatus.className = 'badge ' + (
+                plan.status === 'completed' ? 'bg-success' : 'bg-primary'
+            );
+            
+            // Display milestones
+            displayMilestones(plan.milestones);
+            
+            // Display daily goals
+            displayDailyGoals(plan.dailyGoals);
+            
+            // Update progress chart
+            updateProgressChart(plan);
+        }
+
+        // Display milestones
+        function displayMilestones(milestones) {
+            milestonesContainer.innerHTML = '';
+            
+            milestones.forEach((milestone, milestoneIndex) => {
+                const milestoneEl = document.createElement('div');
+                milestoneEl.className = `card milestone-card ${milestone.completed ? 'completed-milestone' : ''}`;
+                
+                milestoneEl.innerHTML = `
+                    <div class="milestone-header" data-milestone-index="${milestoneIndex}">
+                        <h5 class="mb-0">${milestone.title}</h5>
+                        <p class="mb-0 small text-muted">${milestone.timeframe}</p>
+                    </div>
+                    <div class="milestone-body">
+                        <p>${milestone.description}</p>
+                        
+                        <h6>Nhiệm vụ hàng tuần</h6>
+                        <div id="tasks-${milestoneIndex}">
+                            <!-- Tasks will be loaded here -->
+                        </div>
+                    </div>
+                `;
+                
+                milestonesContainer.appendChild(milestoneEl);
+                
+                // Display tasks for this milestone
+                displayTasks(milestone.weeklyTasks, milestoneIndex, milestone.completed);
+                
+                // Add click event to milestone header
+                milestoneEl.querySelector('.milestone-header').addEventListener('click', () => {
+                    const body = milestoneEl.querySelector('.milestone-body');
+                    body.style.display = body.style.display === 'none' ? 'block' : 'none';
+                });
+            });
+        }
+
+        // Display tasks for a milestone
+        function displayTasks(tasks, milestoneIndex, milestoneCompleted) {
+            const tasksContainer = document.getElementById(`tasks-${milestoneIndex}`);
+            tasksContainer.innerHTML = '';
+            
+            tasks.forEach((task, taskIndex) => {
+                const taskEl = document.createElement('div');
+                taskEl.className = `task-item ${task.completed ? 'task-completed' : ''}`;
+                taskEl.innerHTML = `
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" 
+                            id="task-${milestoneIndex}-${taskIndex}" 
+                            ${task.completed ? 'checked' : ''}
+                            ${milestoneCompleted ? 'disabled' : ''}>
+                        <label class="form-check-label" for="task-${milestoneIndex}-${taskIndex}">
+                            ${task.task || task} <!-- Support both string and object tasks -->
+                        </label>
+                        ${!milestoneCompleted ? `<button class="btn btn-sm btn-outline-primary ms-2 report-task-btn">Báo cáo</button>` : ''}
+                    </div>
+                `;
+                
+                tasksContainer.appendChild(taskEl);
+                
+                // Add event listener to checkbox
+                const checkbox = taskEl.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', () => {
+                    updateTaskStatus(milestoneIndex, taskIndex, checkbox.checked);
+                });
+                
+                // Add event listener to report button
+                if (!milestoneCompleted) {
+                    const reportBtn = taskEl.querySelector('.report-task-btn');
+                    reportBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openTaskChat(milestoneIndex, taskIndex);
+                    });
+                }
+            });
+        }
+
+        // Display daily goals
+        function displayDailyGoals(goals) {
+            dailyGoals.innerHTML = '';
+            
+            goals.forEach((goal, index) => {
+                const li = document.createElement('li');
+                li.textContent = goal;
+                dailyGoals.appendChild(li);
+            });
+        }
+
+        // Update progress chart
+        function updateProgressChart(plan) {
+            const ctx = progressChartEl.getContext('2d');
+            
+            // Calculate completed milestones
+            const completedMilestones = plan.milestones.filter(m => m.completed).length;
+            const totalMilestones = plan.milestones.length;
+            
+            if (progressChart) {
+                progressChart.destroy();
+            }
+            
+            progressChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Hoàn thành', 'Còn lại'],
+                    datasets: [{
+                        data: [completedMilestones, totalMilestones - completedMilestones],
+                        backgroundColor: [
+                            '#28a745',
+                            '#dc3545'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw} mốc`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update task status in Firestore
+        function updateTaskStatus(milestoneIndex, taskIndex, completed) {
+            if (!currentPlanId) return;
+            
+            // Create update path
+            const updatePath = `milestones.${milestoneIndex}.weeklyTasks.${taskIndex}.completed`;
+            
+            // Update in Firestore
+            db.collection('plans').doc(currentPlanId).update({
+                [updatePath]: completed
+            }).then(() => {
+                // Check if all tasks in milestone are completed
+                checkMilestoneCompletion(milestoneIndex);
+            }).catch(error => {
+                console.error('Error updating task:', error);
+                alert('Có lỗi xảy ra khi cập nhật nhiệm vụ');
+            });
+        }
+
+        // Check if all tasks in a milestone are completed
+        function checkMilestoneCompletion(milestoneIndex) {
+            const milestone = currentPlan.milestones[milestoneIndex];
+            const allTasksCompleted = milestone.weeklyTasks.every(task => task.completed);
+            
+            if (allTasksCompleted && !milestone.completed) {
+                // Update milestone status in Firestore
+                const updatePath = `milestones.${milestoneIndex}.completed`;
+                
+                db.collection('plans').doc(currentPlanId).update({
+                    [updatePath]: true,
+                    [`milestones.${milestoneIndex}.completedAt`]: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    // Check if all milestones are completed
+                    checkPlanCompletion();
+                }).catch(error => {
+                    console.error('Error updating milestone:', error);
+                });
+            }
+        }
+
+        // Check if all milestones are completed
+        function checkPlanCompletion() {
+            db.collection('plans').doc(currentPlanId).get().then(doc => {
+                const plan = doc.data();
+                const allMilestonesCompleted = plan.milestones.every(m => m.completed);
+                
+                if (allMilestonesCompleted && plan.status !== 'completed') {
+                    // Mark plan as completed
+                    db.collection('plans').doc(currentPlanId).update({
+                        status: 'completed',
+                        completedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            });
+        }
+
+        // Open chat modal for a task
+        function openTaskChat(milestoneIndex, taskIndex) {
+            currentMilestoneIndex = milestoneIndex;
+            currentTaskIndex = taskIndex;
+            
+            // Get the task
+            currentTask = currentPlan.milestones[milestoneIndex].weeklyTasks[taskIndex];
+            
+            // Set modal title
+            taskChatModalTitle.textContent = `Báo cáo nhiệm vụ: ${currentTask.task || currentTask}`;
+            
+            // Clear chat messages
+            chatMessages.innerHTML = '';
+            
+            // Load any existing chat history
+            if (currentTask.chatHistory) {
+                currentTask.chatHistory.forEach(message => {
+                    addMessageToChat(message.sender, message.text, message.timestamp, message.imageUrl);
+                });
+            }
+            
+            // Show modal
+            taskChatModal.show();
+        }
+
+        // Send message in task chat
+        sendMessageBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+
+        function sendChatMessage() {
+            const messageText = chatInput.value.trim();
+            if (!messageText && !fileUpload.files[0]) return;
+            
+            // Add user message to chat
+            addMessageToChat('user', messageText, new Date());
+            
+            // Clear input
+            chatInput.value = '';
+            
+            // Upload file if exists
+            if (fileUpload.files[0]) {
+                uploadFileAndSendMessage(fileUpload.files[0], messageText);
+                fileUpload.value = '';
+            } else {
+                // Simulate AI response (in a real app, this would call Gemini API)
+                setTimeout(() => {
+                    simulateAIResponse(messageText);
+                }, 1000);
+            }
+        }
+
+        // Upload file and send message
+        function uploadFileAndSendMessage(file, messageText) {
+            const storageRef = storage.ref(`task_reports/${currentPlanId}/${currentMilestoneIndex}_${currentTaskIndex}/${file.name}`);
+            
+            storageRef.put(file).then(snapshot => {
+                return snapshot.ref.getDownloadURL();
+            }).then(downloadURL => {
+                // Add message with image
+                saveChatMessage('user', messageText, downloadURL);
+                
+                // Simulate AI response
+                setTimeout(() => {
+                    simulateAIResponse(messageText, downloadURL);
+                }, 1000);
+            }).catch(error => {
+                console.error('Error uploading file:', error);
+                alert('Có lỗi xảy ra khi tải lên tệp');
+            });
+        }
+
+        // Simulate AI response (in a real app, this would call Gemini API)
+        function simulateAIResponse(userMessage, imageUrl = null) {
+            let responseText = '';
+            
+            if (userMessage.toLowerCase().includes('khó khăn')) {
+                responseText = "Tôi hiểu bạn đang gặp khó khăn. Hãy thử chia nhỏ nhiệm vụ thành các bước nhỏ hơn và tập trung vào từng bước một. Bạn có thể cho tôi biết cụ thể hơn về vấn đề bạn gặp phải không?";
+            } else if (userMessage.toLowerCase().includes('hoàn thành')) {
+                responseText = "Rất tốt! Bạn đã hoàn thành phần nào của nhiệm vụ? Hãy mô tả chi tiết để tôi có thể đánh giá và giúp bạn tiến xa hơn.";
+            } else if (imageUrl) {
+                responseText = "Cảm ơn bạn đã gửi hình ảnh báo cáo. Từ hình ảnh này, tôi thấy bạn đang đi đúng hướng. Hãy tiếp tục phát huy!";
+            } else {
+                const responses = [
+                    "Cảm ơn bạn đã báo cáo. Bạn đang làm rất tốt!",
+                    "Tôi đã ghi nhận báo cáo của bạn. Bạn có cần hỗ trợ gì thêm không?",
+                    "Tiến độ của bạn rất ổn định. Hãy tiếp tục duy trì đà này!",
+                    "Từ báo cáo của bạn, tôi thấy bạn đang tiến bộ rõ rệt. Làm tốt lắm!",
+                    "Bạn có thể cung cấp thêm chi tiết về những gì bạn đã làm được không?"
+                ];
+                responseText = responses[Math.floor(Math.random() * responses.length)];
+            }
+            
+            addMessageToChat('ai', responseText, new Date());
+            saveChatMessage('ai', responseText, null);
+        }
+
+        // Add message to chat UI
+        function addMessageToChat(sender, text, timestamp, imageUrl = null) {
+            if (!text && !imageUrl) return;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender === 'user' ? 'user-message' : 'ai-message'}`;
+            
+            let messageContent = '';
+            if (text) {
+                messageContent += `<div>${text}</div>`;
+            }
+            if (imageUrl) {
+                messageContent += `<div class="mt-2"><img src="${imageUrl}" style="max-width: 100%; max-height: 200px; border-radius: 8px;"></div>`;
+            }
+            messageContent += `<div class="small text-muted mt-1" style="text-align: ${sender === 'user' ? 'right' : 'left'}">${formatTime(timestamp)}</div>`;
+            
+            messageDiv.innerHTML = messageContent;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Save chat message to Firestore
+        function saveChatMessage(sender, text, imageUrl) {
+            if (!currentPlanId || currentMilestoneIndex === null || currentTaskIndex === null) return;
+            
+            const message = {
+                sender,
+                text,
+                imageUrl,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            const updatePath = `milestones.${currentMilestoneIndex}.weeklyTasks.${currentTaskIndex}.chatHistory`;
+            
+            db.collection('plans').doc(currentPlanId).update({
+                [updatePath]: firebase.firestore.FieldValue.arrayUnion(message)
+            }).catch(error => {
+                console.error('Error saving chat message:', error);
+            });
+        }
+
+        // Complete task button
+        completeTaskBtn.addEventListener('click', () => {
+            if (confirm('Bạn có chắc chắn đã hoàn thành nhiệm vụ này?')) {
+                updateTaskStatus(currentMilestoneIndex, currentTaskIndex, true);
+                taskChatModal.hide();
+            }
+        });
+
+        // Cancel task button
+        cancelTaskBtn.addEventListener('click', () => {
+            if (confirm('Bạn có chắc chắn muốn hủy nhiệm vụ này? Bạn sẽ không thể hoàn thành kế hoạch nếu hủy quá nhiều nhiệm vụ.')) {
+                // In a real app, you might want to mark the task as cancelled
+                // For now, we'll just close the modal
+                taskChatModal.hide();
+            }
+        });
+
+        // Helper functions
+        function formatTime(timestamp) {
+            if (timestamp.toDate) {
+                timestamp = timestamp.toDate();
+            }
+            return timestamp.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        }
+    </script>
+</body>
+</html>
