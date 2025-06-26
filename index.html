@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kế hoạch số - Trang chủ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .auth-container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .plan-card {
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .plan-card:hover {
+            transform: translateY(-5px);
+        }
+        .difficulty-easy {
+            border-left: 5px solid #28a745;
+        }
+        .difficulty-medium {
+            border-left: 5px solid #ffc107;
+        }
+        .difficulty-hard {
+            border-left: 5px solid #dc3545;
+        }
+        .stats-card {
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">Kế hoạch số</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item" id="auth-menu">
+                        <a class="nav-link" href="#" id="login-btn">Đăng nhập</a>
+                        <a class="nav-link" href="#" id="register-btn">Đăng ký</a>
+                    </li>
+                    <li class="nav-item hidden" id="user-menu">
+                        <a class="nav-link" href="#" id="username-display"></a>
+                        <a class="nav-link" href="#" id="logout-btn">Đăng xuất</a>
+                    </li>
+                    <li class="nav-item hidden" id="create-plan-menu">
+                        <a class="nav-link btn btn-success btn-sm" href="create-plan.html">Tạo kế hoạch mới</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <!-- Auth Forms -->
+        <div id="auth-forms">
+            <div class="auth-container" id="login-container">
+                <h2 class="text-center mb-4">Đăng nhập</h2>
+                <form id="login-form">
+                    <div class="mb-3">
+                        <label for="login-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="login-email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="login-password" class="form-label">Mật khẩu</label>
+                        <input type="password" class="form-control" id="login-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
+                </form>
+                <p class="text-center mt-3">Chưa có tài khoản? <a href="#" id="show-register">Đăng ký ngay</a></p>
+            </div>
+
+            <div class="auth-container hidden" id="register-container">
+                <h2 class="text-center mb-4">Đăng ký</h2>
+                <form id="register-form">
+                    <div class="mb-3">
+                        <label for="register-name" class="form-label">Họ và tên</label>
+                        <input type="text" class="form-control" id="register-name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="register-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="register-email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="register-password" class="form-label">Mật khẩu</label>
+                        <input type="password" class="form-control" id="register-password" required minlength="6">
+                    </div>
+                    <div class="mb-3">
+                        <label for="register-confirm-password" class="form-label">Xác nhận mật khẩu</label>
+                        <input type="password" class="form-control" id="register-confirm-password" required minlength="6">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Đăng ký</button>
+                </form>
+                <p class="text-center mt-3">Đã có tài khoản? <a href="#" id="show-login">Đăng nhập ngay</a></p>
+            </div>
+        </div>
+
+        <!-- Main Content (hidden when not logged in) -->
+        <div class="hidden" id="main-content">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="stats-card">
+                        <h4>Thống kê kế hoạch</h4>
+                        <div class="row">
+                            <div class="col-4 text-center">
+                                <h5 id="total-plans">0</h5>
+                                <p>Tổng số</p>
+                            </div>
+                            <div class="col-4 text-center">
+                                <h5 id="completed-plans">0</h5>
+                                <p>Hoàn thành</p>
+                            </div>
+                            <div class="col-4 text-center">
+                                <h5 id="in-progress-plans">0</h5>
+                                <p>Đang thực hiện</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="stats-card">
+                        <h4>Phân bổ độ khó</h4>
+                        <canvas id="difficultyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="mb-4">Kế hoạch của bạn</h3>
+            <div class="row" id="plans-container">
+                <!-- Plans will be loaded here -->
+                <div class="col-12">
+                    <div class="alert alert-info">Bạn chưa có kế hoạch nào. Hãy tạo kế hoạch mới để bắt đầu!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase and other scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM elements
+        const authForms = document.getElementById('auth-forms');
+        const mainContent = document.getElementById('main-content');
+        const loginContainer = document.getElementById('login-container');
+        const registerContainer = document.getElementById('register-container');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const showRegister = document.getElementById('show-register');
+        const showLogin = document.getElementById('show-login');
+        const authMenu = document.getElementById('auth-menu');
+        const userMenu = document.getElementById('user-menu');
+        const usernameDisplay = document.getElementById('username-display');
+        const logoutBtn = document.getElementById('logout-btn');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const createPlanMenu = document.getElementById('create-plan-menu');
+        const plansContainer = document.getElementById('plans-container');
+        const totalPlansEl = document.getElementById('total-plans');
+        const completedPlansEl = document.getElementById('completed-plans');
+        const inProgressPlansEl = document.getElementById('in-progress-plans');
+        
+        let difficultyChart;
+
+        // Auth state listener
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in
+                authForms.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                authMenu.classList.add('hidden');
+                userMenu.classList.remove('hidden');
+                createPlanMenu.classList.remove('hidden');
+                usernameDisplay.textContent = user.displayName || user.email;
+                
+                // Load user's plans
+                loadUserPlans(user.uid);
+            } else {
+                // User is signed out
+                authForms.classList.remove('hidden');
+                mainContent.classList.add('hidden');
+                authMenu.classList.remove('hidden');
+                userMenu.classList.add('hidden');
+                createPlanMenu.classList.add('hidden');
+                loginContainer.classList.remove('hidden');
+                registerContainer.classList.add('hidden');
+            }
+        });
+
+        // Toggle between login and register forms
+        showRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginContainer.classList.add('hidden');
+            registerContainer.classList.remove('hidden');
+        });
+
+        showLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            registerContainer.classList.add('hidden');
+            loginContainer.classList.remove('hidden');
+        });
+
+        // Login form submission
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    // Success - handled by auth state listener
+                })
+                .catch(error => {
+                    alert('Đăng nhập thất bại: ' + error.message);
+                });
+        });
+
+        // Register form submission
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            
+            if (password !== confirmPassword) {
+                alert('Mật khẩu xác nhận không khớp!');
+                return;
+            }
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Update user profile with name
+                    return userCredential.user.updateProfile({
+                        displayName: name
+                    });
+                })
+                .then(() => {
+                    // Create user document in Firestore
+                    return db.collection('users').doc(auth.currentUser.uid).set({
+                        name: name,
+                        email: email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                })
+                .then(() => {
+                    // Success - handled by auth state listener
+                })
+                .catch(error => {
+                    alert('Đăng ký thất bại: ' + error.message);
+                });
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            auth.signOut();
+        });
+
+        // Load user's plans from Firestore
+        function loadUserPlans(userId) {
+            db.collection('plans').where('userId', '==', userId)
+                .orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    plansContainer.innerHTML = '';
+                    
+                    let totalPlans = 0;
+                    let completedPlans = 0;
+                    let inProgressPlans = 0;
+                    const difficultyCount = { easy: 0, medium: 0, hard: 0 };
+                    
+                    if (snapshot.empty) {
+                        plansContainer.innerHTML = `
+                            <div class="col-12">
+                                <div class="alert alert-info">Bạn chưa có kế hoạch nào. Hãy tạo kế hoạch mới để bắt đầu!</div>
+                            </div>
+                        `;
+                    } else {
+                        snapshot.forEach(doc => {
+                            const plan = doc.data();
+                            totalPlans++;
+                            
+                            if (plan.status === 'completed') {
+                                completedPlans++;
+                            } else {
+                                inProgressPlans++;
+                            }
+                            
+                            difficultyCount[plan.difficulty]++;
+                            
+                            const progressPercentage = calculateProgress(plan);
+                            
+                            plansContainer.innerHTML += `
+                                <div class="col-md-6">
+                                    <div class="card plan-card difficulty-${plan.difficulty}">
+                                        <div class="card-body">
+                                            <h5 class="card-title">${plan.title}</h5>
+                                            <p class="card-text text-muted">${plan.description.substring(0, 100)}...</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="badge bg-${getDifficultyBadgeColor(plan.difficulty)}">
+                                                    ${getDifficultyText(plan.difficulty)}
+                                                </span>
+                                                <span class="text-muted small">${formatDate(plan.createdAt.toDate())}</span>
+                                            </div>
+                                            <div class="progress mt-2">
+                                                <div class="progress-bar" role="progressbar" style="width: ${progressPercentage}%" 
+                                                    aria-valuenow="${progressPercentage}" aria-valuemin="0" aria-valuemax="100">
+                                                    ${Math.round(progressPercentage)}%
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-between mt-3">
+                                                <a href="execute-plan.html?planId=${doc.id}" class="btn btn-sm btn-primary">Xem chi tiết</a>
+                                                <span class="text-muted small">${plan.status === 'completed' ? 'Đã hoàn thành' : 'Đang thực hiện'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    // Update stats
+                    totalPlansEl.textContent = totalPlans;
+                    completedPlansEl.textContent = completedPlans;
+                    inProgressPlansEl.textContent = inProgressPlans;
+                    
+                    // Update chart
+                    updateDifficultyChart(difficultyCount);
+                });
+        }
+
+        // Helper functions
+        function calculateProgress(plan) {
+            if (plan.status === 'completed') return 100;
+            
+            if (!plan.milestones || plan.milestones.length === 0) return 0;
+            
+            const completedMilestones = plan.milestones.filter(m => m.completed).length;
+            return (completedMilestones / plan.milestones.length) * 100;
+        }
+
+        function getDifficultyBadgeColor(difficulty) {
+            switch(difficulty) {
+                case 'easy': return 'success';
+                case 'medium': return 'warning';
+                case 'hard': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        function getDifficultyText(difficulty) {
+            switch(difficulty) {
+                case 'easy': return 'Dễ';
+                case 'medium': return 'Trung bình';
+                case 'hard': return 'Khó';
+                default: return difficulty;
+            }
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        function updateDifficultyChart(data) {
+            const ctx = document.getElementById('difficultyChart').getContext('2d');
+            
+            if (difficultyChart) {
+                difficultyChart.destroy();
+            }
+            
+            difficultyChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Dễ', 'Trung bình', 'Khó'],
+                    datasets: [{
+                        data: [data.easy, data.medium, data.hard],
+                        backgroundColor: [
+                            '#28a745',
+                            '#ffc107',
+                            '#dc3545'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
