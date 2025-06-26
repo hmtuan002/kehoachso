@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kế hoạch số - Trang chủ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .plan-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px;
+        }
+        .plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .difficulty-easy {
+            border-left: 5px solid #28a745;
+        }
+        .difficulty-medium {
+            border-left: 5px solid #ffc107;
+        }
+        .difficulty-hard {
+            border-left: 5px solid #dc3545;
+        }
+        .stats-card {
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .logout-btn {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white">
+        <div class="container">
+            <a class="navbar-brand" href="#">Kế hoạch số</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Trang chủ</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <span id="user-name" class="me-3"></span>
+                    <button id="logout-btn" class="btn btn-outline-danger">Đăng xuất</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h2>Kế hoạch của tôi</h2>
+            </div>
+            <div class="col-md-6 text-end">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newPlanModal">
+                    Tạo kế hoạch mới
+                </button>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="stats-card bg-white">
+                    <h5>Tổng kế hoạch</h5>
+                    <h2 id="total-plans">0</h2>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stats-card bg-white">
+                    <h5>Đang thực hiện</h5>
+                    <h2 id="active-plans">0</h2>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stats-card bg-white">
+                    <h5>Hoàn thành</h5>
+                    <h2 id="completed-plans">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Tiến độ kế hoạch</h5>
+                        <canvas id="plansChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Phân bổ độ khó</h5>
+                        <canvas id="difficultyChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4" id="plans-container">
+            <!-- Plans will be loaded here -->
+        </div>
+    </div>
+
+    <!-- New Plan Modal -->
+    <div class="modal fade" id="newPlanModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tạo kế hoạch mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="plan-title" class="form-label">Tiêu đề kế hoạch</label>
+                        <input type="text" class="form-control" id="plan-title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="plan-description" class="form-label">Mô tả kế hoạch</label>
+                        <textarea class="form-control" id="plan-description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="plan-duration" class="form-label">Thời gian thực hiện</label>
+                        <select class="form-select" id="plan-duration">
+                            <option value="1">1 tuần</option>
+                            <option value="2">2 tuần</option>
+                            <option value="4">1 tháng</option>
+                            <option value="8">2 tháng</option>
+                            <option value="12">3 tháng</option>
+                            <option value="unknown">Chưa biết (AI sẽ đề xuất)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="plan-category" class="form-label">Loại kế hoạch</label>
+                        <select class="form-select" id="plan-category">
+                            <option value="học tập">Học tập</option>
+                            <option value="công việc">Công việc</option>
+                            <option value="sức khỏe">Sức khỏe</option>
+                            <option value="phát triển bản thân">Phát triển bản thân</option>
+                            <option value="khác">Khác</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" id="generate-plan-btn" class="btn btn-primary">
+                        <span id="generate-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        Tạo kế hoạch với AI
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plan Preview Modal -->
+    <div class="modal fade" id="planPreviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Xem trước kế hoạch</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="plan-preview-content">
+                    <!-- Plan preview will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chỉnh sửa</button>
+                    <button type="button" id="save-plan-btn" class="btn btn-primary">Lưu kế hoạch</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Other libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    
+    <script>
+        // Firebase configuration (same as index.html)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM elements
+        const userNameElement = document.getElementById('user-name');
+        const logoutBtn = document.getElementById('logout-btn');
+        const plansContainer = document.getElementById('plans-container');
+        const totalPlansElement = document.getElementById('total-plans');
+        const activePlansElement = document.getElementById('active-plans');
+        const completedPlansElement = document.getElementById('completed-plans');
+        const generatePlanBtn = document.getElementById('generate-plan-btn');
+        const generateSpinner = document.getElementById('generate-spinner');
+        const savePlanBtn = document.getElementById('save-plan-btn');
+
+        // Chart instances
+        let plansChart, difficultyChart;
+        
+        // Current user data
+        let currentUser = null;
+        let userPlans = [];
+
+        // Check auth state
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                // User is not signed in, redirect to login
+                window.location.href = 'index.html';
+            } else {
+                currentUser = user;
+                userNameElement.textContent = user.email;
+                loadUserData();
+                loadPlans();
+            }
+        });
+
+        // Logout function
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut().then(() => {
+                window.location.href = 'index.html';
+            });
+        });
+
+        // Load user data from Firestore
+        function loadUserData() {
+            db.collection('users').doc(currentUser.uid).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        userNameElement.textContent = userData.name || userData.email;
+                    }
+                });
+        }
+
+        // Load plans from Firestore
+        function loadPlans() {
+            db.collection('plans')
+                .where('userId', '==', currentUser.uid)
+                .orderBy('createdAt', 'desc')
+                .onSnapshot((snapshot) => {
+                    userPlans = [];
+                    plansContainer.innerHTML = '';
+                    
+                    snapshot.forEach((doc) => {
+                        const plan = { id: doc.id, ...doc.data() };
+                        userPlans.push(plan);
+                        renderPlanCard(plan);
+                    });
+                    
+                    updateStats();
+                    renderCharts();
+                });
+        }
+
+        // Render a plan card
+        function renderPlanCard(plan) {
+            const difficultyClass = `difficulty-${plan.difficulty || 'medium'}`;
+            const progressPercentage = plan.progress ? Math.round(plan.progress * 100) : 0;
+            
+            const card = document.createElement('div');
+            card.className = `col-md-4`;
+            card.innerHTML = `
+                <div class="card plan-card ${difficultyClass}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="card-title">${plan.title}</h5>
+                            <span class="badge bg-${getDifficultyBadgeColor(plan.difficulty)}">
+                                ${getDifficultyText(plan.difficulty)}
+                            </span>
+                        </div>
+                        <p class="card-text text-muted">${plan.category || 'Khác'}</p>
+                        <p class="card-text">${plan.shortDescription || ''}</p>
+                        
+                        <div class="mb-2">
+                            <small class="text-muted">Tiến độ: ${progressPercentage}%</small>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: ${progressPercentage}%" 
+                                    aria-valuenow="${progressPercentage}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">${formatDate(plan.createdAt?.toDate())}</small>
+                            <a href="plan.html?id=${plan.id}" class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            plansContainer.appendChild(card);
+        }
+
+        // Update stats
+        function updateStats() {
+            totalPlansElement.textContent = userPlans.length;
+            activePlansElement.textContent = userPlans.filter(p => !p.completed).length;
+            completedPlansElement.textContent = userPlans.filter(p => p.completed).length;
+        }
+
+        // Render charts
+        function renderCharts() {
+            // Destroy existing charts if they exist
+            if (plansChart) plansChart.destroy();
+            if (difficultyChart) difficultyChart.destroy();
+            
+            // Plans progress chart
+            const ctx1 = document.getElementById('plansChart').getContext('2d');
+            plansChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: userPlans.map(p => p.title),
+                    datasets: [{
+                        label: 'Tiến độ (%)',
+                        data: userPlans.map(p => p.progress ? Math.round(p.progress * 100) : 0),
+                        backgroundColor: userPlans.map(p => getDifficultyColor(p.difficulty)),
+                        borderColor: userPlans.map(p => getDifficultyBorderColor(p.difficulty)),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+            
+            // Difficulty distribution chart
+            const difficultyCounts = {
+                easy: userPlans.filter(p => p.difficulty === 'easy').length,
+                medium: userPlans.filter(p => p.difficulty === 'medium').length,
+                hard: userPlans.filter(p => p.difficulty === 'hard').length
+            };
+            
+            const ctx2 = document.getElementById('difficultyChart').getContext('2d');
+            difficultyChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Dễ', 'Trung bình', 'Khó'],
+                    datasets: [{
+                        data: [difficultyCounts.easy, difficultyCounts.medium, difficultyCounts.hard],
+                        backgroundColor: [
+                            '#28a745',
+                            '#ffc107',
+                            '#dc3545'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        }
+
+        // Generate plan with AI
+        generatePlanBtn.addEventListener('click', async () => {
+            const title = document.getElementById('plan-title').value;
+            const description = document.getElementById('plan-description').value;
+            const duration = document.getElementById('plan-duration').value;
+            const category = document.getElementById('plan-category').value;
+            
+            if (!title || !description) {
+                alert('Vui lòng nhập tiêu đề và mô tả kế hoạch');
+                return;
+            }
+            
+            generateSpinner.classList.remove('d-none');
+            generatePlanBtn.disabled = true;
+            
+            try {
+                // Call Gemini API to generate the plan
+                const planData = await generatePlanWithAI(title, description, duration, category);
+                
+                // Display the preview
+                displayPlanPreview(planData);
+                
+                // Close the first modal and open the preview modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newPlanModal'));
+                modal.hide();
+                
+                const previewModal = new bootstrap.Modal(document.getElementById('planPreviewModal'));
+                previewModal.show();
+            } catch (error) {
+                console.error('Error generating plan:', error);
+                alert('Có lỗi xảy ra khi tạo kế hoạch. Vui lòng thử lại.');
+            } finally {
+                generateSpinner.classList.add('d-none');
+                generatePlanBtn.disabled = false;
+            }
+        });
+
+        // Save plan to Firestore
+        savePlanBtn.addEventListener('click', () => {
+            const planData = JSON.parse(savePlanBtn.dataset.plan);
+            
+            db.collection('plans').add({
+                ...planData,
+                userId: currentUser.uid,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                progress: 0,
+                completed: false
+            }).then(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('planPreviewModal'));
+                modal.hide();
+            }).catch((error) => {
+                console.error('Error saving plan:', error);
+                alert('Có lỗi xảy ra khi lưu kế hoạch. Vui lòng thử lại.');
+            });
+        });
+
+        // Call Gemini API to generate plan
+        async function generatePlanWithAI(title, description, duration, category) {
+            // In a real app, you would call your backend which calls Gemini API
+            // Here we'll simulate it with a mock response
+            
+            const prompt = `Tạo một kế hoạch chi tiết với các thông tin sau:
+- Tiêu đề: ${title}
+- Mô tả: ${description}
+- Thời gian: ${duration === 'unknown' ? 'AI tự xác định thời gian phù hợp' : duration + ' tuần'}
+- Loại: ${category}
+
+Kế hoạch cần bao gồm:
+1. Mục tiêu tổng thể
+2. Các mốc quan trọng
+3. Nhiệm vụ hàng tuần
+4. Nhiệm vụ hàng ngày (cho tuần đầu tiên)
+5. Độ khó (easy/medium/hard)
+6. Thời lượng ước tính mỗi ngày
+7. Tóm tắt ngắn gọn
+
+Trả về kết quả dưới dạng JSON với cấu trúc sau:
+{
+    "title": "...",
+    "description": "...",
+    "category": "...",
+    "duration": "...",
+    "difficulty": "...",
+    "shortDescription": "...",
+    "dailyTime": "...",
+    "goals": ["..."],
+    "milestones": [
+        {
+            "week": ...,
+            "title": "...",
+            "description": "..."
+        }
+    ],
+    "weeklyTasks": [
+        {
+            "week": ...,
+            "tasks": ["..."]
+        }
+    ],
+    "dailyTasks": [
+        {
+            "day": ...,
+            "tasks": ["..."]
+        }
+    ]
+}`;
+
+            // In a real app, you would make an actual API call to Gemini
+            // For now, we'll use a mock response
+            const mockResponse = {
+                title: title,
+                description: description,
+                category: category,
+                duration: duration === 'unknown' ? '8 tuần' : duration + ' tuần',
+                difficulty: getRandomDifficulty(),
+                shortDescription: `Kế hoạch ${category.toLowerCase()} để ${title.toLowerCase()}`,
+                dailyTime: '1-2 giờ/ngày',
+                goals: [
+                    `Hoàn thành mục tiêu ${title}`,
+                    `Nắm vững các khái niệm chính về ${title}`,
+                    `Áp dụng kiến thức vào thực tế`
+                ],
+                milestones: Array.from({ length: duration === 'unknown' ? 4 : Math.ceil(duration / 2) }, (_, i) => ({
+                    week: (i + 1) * 2,
+                    title: `Mốc ${i + 1}`,
+                    description: `Hoàn thành giai đoạn ${i + 1} của kế hoạch`
+                })),
+                weeklyTasks: Array.from({ length: duration === 'unknown' ? 8 : parseInt(duration) }, (_, i) => ({
+                    week: i + 1,
+                    tasks: [
+                        `Nhiệm vụ 1 tuần ${i + 1}`,
+                        `Nhiệm vụ 2 tuần ${i + 1}`,
+                        `Nhiệm vụ 3 tuần ${i + 1}`
+                    ]
+                })),
+                dailyTasks: Array.from({ length: 7 }, (_, i) => ({
+                    day: i + 1,
+                    tasks: [
+                        `Nhiệm vụ buổi sáng ngày ${i + 1}`,
+                        `Nhiệm vụ buổi chiều ngày ${i + 1}`
+                    ]
+                }))
+            };
+
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            return mockResponse;
+        }
+
+        // Display plan preview
+        function displayPlanPreview(planData) {
+            const previewContent = document.getElementById('plan-preview-content');
+            
+            // Save plan data to the save button for later use
+            savePlanBtn.dataset.plan = JSON.stringify(planData);
+            
+            // Create HTML for the preview
+            previewContent.innerHTML = `
+                <div class="mb-4">
+                    <h4>${planData.title}</h4>
+                    <p class="text-muted">${planData.category} • ${planData.duration} • ${planData.difficulty}</p>
+                    <p>${planData.description}</p>
+                    <p><strong>Tóm tắt:</strong> ${planData.shortDescription}</p>
+                    <p><strong>Thời gian hàng ngày:</strong> ${planData.dailyTime}</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h5>Mục tiêu tổng thể</h5>
+                    <ul>
+                        ${planData.goals.map(goal => `<li>${goal}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="mb-4">
+                    <h5>Các mốc quan trọng</h5>
+                    <div class="row">
+                        ${planData.milestones.map(milestone => `
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6>Tuần ${milestone.week}: ${milestone.title}</h6>
+                                        <p class="text-muted">${milestone.description}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h5>Nhiệm vụ hàng tuần</h5>
+                    <div class="accordion" id="weeklyTasksAccordion">
+                        ${planData.weeklyTasks.map((weekTasks, idx) => `
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="heading${idx}">
+                                    <button class="accordion-button ${idx !== 0 ? 'collapsed' : ''}" type="button" 
+                                            data-bs-toggle="collapse" data-bs-target="#collapse${idx}" 
+                                            aria-expanded="${idx === 0 ? 'true' : 'false'}" aria-controls="collapse${idx}">
+                                        Tuần ${weekTasks.week}
+                                    </button>
+                                </h2>
+                                <div id="collapse${idx}" class="accordion-collapse collapse ${idx === 0 ? 'show' : ''}" 
+                                     aria-labelledby="heading${idx}" data-bs-parent="#weeklyTasksAccordion">
+                                    <div class="accordion-body">
+                                        <ul>
+                                            ${weekTasks.tasks.map(task => `<li>${task}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h5>Nhiệm vụ hàng ngày (Tuần 1)</h5>
+                    <div class="row">
+                        ${planData.dailyTasks.map(dayTasks => `
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6>Ngày ${dayTasks.day}</h6>
+                                        <ul>
+                                            ${dayTasks.tasks.map(task => `<li>${task}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Helper functions
+        function getRandomDifficulty() {
+            const difficulties = ['easy', 'medium', 'hard'];
+            return difficulties[Math.floor(Math.random() * difficulties.length)];
+        }
+
+        function getDifficultyText(difficulty) {
+            switch (difficulty) {
+                case 'easy': return 'Dễ';
+                case 'medium': return 'Trung bình';
+                case 'hard': return 'Khó';
+                default: return 'Trung bình';
+            }
+        }
+
+        function getDifficultyBadgeColor(difficulty) {
+            switch (difficulty) {
+                case 'easy': return 'success';
+                case 'medium': return 'warning';
+                case 'hard': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        function getDifficultyColor(difficulty) {
+            switch (difficulty) {
+                case 'easy': return 'rgba(40, 167, 69, 0.7)';
+                case 'medium': return 'rgba(255, 193, 7, 0.7)';
+                case 'hard': return 'rgba(220, 53, 69, 0.7)';
+                default: return 'rgba(108, 117, 125, 0.7)';
+            }
+        }
+
+        function getDifficultyBorderColor(difficulty) {
+            switch (difficulty) {
+                case 'easy': return 'rgba(40, 167, 69, 1)';
+                case 'medium': return 'rgba(255, 193, 7, 1)';
+                case 'hard': return 'rgba(220, 53, 69, 1)';
+                default: return 'rgba(108, 117, 125, 1)';
+            }
+        }
+
+        function formatDate(date) {
+            if (!date) return '';
+            return date.toLocaleDateString('vi-VN');
+        }
+    </script>
+</body>
+</html>
