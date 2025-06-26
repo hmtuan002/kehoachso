@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kế hoạch số - Chi tiết kế hoạch</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .plan-header {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .task-card {
+            transition: transform 0.2s;
+            margin-bottom: 15px;
+        }
+        .task-card:hover {
+            transform: translateY(-3px);
+        }
+        .completed-task {
+            opacity: 0.7;
+            background-color: #f8f9fa;
+        }
+        .chat-container {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: white;
+        }
+        .user-message {
+            background-color: #e3f2fd;
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-bottom: 5px;
+            max-width: 80%;
+            margin-left: auto;
+        }
+        .ai-message {
+            background-color: #f1f1f1;
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-bottom: 5px;
+            max-width: 80%;
+        }
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white">
+        <div class="container">
+            <a class="navbar-brand" href="home.html">Kế hoạch số</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="home.html">Trang chủ</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <span id="user-name" class="me-3"></span>
+                    <button id="logout-btn" class="btn btn-outline-danger">Đăng xuất</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="plan-header">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h2 id="plan-title">Tiêu đề kế hoạch</h2>
+                    <p class="text-muted" id="plan-category-duration"></p>
+                </div>
+                <span class="badge" id="plan-difficulty-badge">Độ khó</span>
+            </div>
+            <p id="plan-description"></p>
+            
+            <div class="row mt-3">
+                <div class="col-md-8">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Tiến độ kế hoạch</span>
+                        <span id="progress-percentage">0%</span>
+                    </div>
+                    <div class="progress">
+                        <div id="plan-progress-bar" class="progress-bar" role="progressbar" style="width: 0%" 
+                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button id="complete-plan-btn" class="btn btn-success">Đánh dấu hoàn thành</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Mục tiêu tổng thể</h5>
+                        <ul id="plan-goals"></ul>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Các mốc quan trọng</h5>
+                        <div class="row" id="plan-milestones"></div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Nhiệm vụ</h5>
+                        <ul class="nav nav-tabs" id="tasksTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="weekly-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#weekly-tasks" type="button" role="tab">
+                                    Hàng tuần
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="daily-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#daily-tasks" type="button" role="tab">
+                                    Hàng ngày
+                                </button>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="tasksTabContent">
+                            <div class="tab-pane fade show active" id="weekly-tasks" role="tabpanel">
+                                <div class="accordion mt-3" id="weeklyTasksAccordion"></div>
+                            </div>
+                            <div class="tab-pane fade" id="daily-tasks" role="tabpanel">
+                                <div class="row mt-3" id="dailyTasksContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Thống kê</h5>
+                        <canvas id="tasksChart" height="200"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Tiến độ theo tuần</h5>
+                        <canvas id="weeklyProgressChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Chat Modal -->
+    <div class="modal fade" id="taskChatModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskChatModalTitle">Báo cáo nhiệm vụ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="chat-container" id="chat-messages">
+                            <!-- Chat messages will appear here -->
+                        </div>
+                        <div class="input-group mt-2">
+                            <input type="text" class="form-control" id="chat-input" placeholder="Nhập báo cáo của bạn...">
+                            <button class="btn btn-primary" id="send-message-btn">Gửi</button>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">Bạn có thể gửi văn bản hoặc hình ảnh</small>
+                            <input type="file" class="form-control mt-1" id="image-upload" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="cancel-task-btn">Hủy nhiệm vụ</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Other libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    
+    <script>
+        // Firebase configuration (same as index.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCznQ023bnCgA6QLl2M-0J5X3pslRiQwa0",
+            authDomain: "kehoachso.firebaseapp.com",
+            projectId: "kehoachso",
+            storageBucket: "kehoachso.firebasestorage.app",
+            messagingSenderId: "80210804205",
+            appId: "1:80210804205:web:be0d3b3e68bae6867dfbe4"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM elements
+        const userNameElement = document.getElementById('user-name');
+        const logoutBtn = document.getElementById('logout-btn');
+        const planTitleElement = document.getElementById('plan-title');
+        const planDescriptionElement = document.getElementById('plan-description');
+        const planCategoryDurationElement = document.getElementById('plan-category-duration');
+        const planDifficultyBadge = document.getElementById('plan-difficulty-badge');
+        const planGoalsElement = document.getElementById('plan-goals');
+        const planMilestonesElement = document.getElementById('plan-milestones');
+        const weeklyTasksAccordion = document.getElementById('weeklyTasksAccordion');
+        const dailyTasksContainer = document.getElementById('dailyTasksContainer');
+        const progressPercentageElement = document.getElementById('progress-percentage');
+        const planProgressBar = document.getElementById('plan-progress-bar');
+        const completePlanBtn = document.getElementById('complete-plan-btn');
+        const taskChatModalTitle = document.getElementById('taskChatModalTitle');
+        const chatMessagesElement = document.getElementById('chat-messages');
+        const chatInputElement = document.getElementById('chat-input');
+        const sendMessageBtn = document.getElementById('send-message-btn');
+        const imageUploadElement = document.getElementById('image-upload');
+        const cancelTaskBtn = document.getElementById('cancel-task-btn');
+
+        // Chart instances
+        let tasksChart, weeklyProgressChart;
+        
+        // Current data
+        let currentUser = null;
+        let currentPlan = null;
+        let currentPlanId = null;
+        let currentTask = null;
+        let tasks = [];
+        let completedTasks = [];
+
+        // Check auth state
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                // User is not signed in, redirect to login
+                window.location.href = 'index.html';
+            } else {
+                currentUser = user;
+                userNameElement.textContent = user.email;
+                loadUserData();
+                
+                // Get plan ID from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                currentPlanId = urlParams.get('id');
+                
+                if (currentPlanId) {
+                    loadPlan(currentPlanId);
+                    loadTasks(currentPlanId);
+                } else {
+                    // No plan ID, redirect to home
+                    window.location.href = 'home.html';
+                }
+            }
+        });
+
+        // Logout function
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut().then(() => {
+                window.location.href = 'index.html';
+            });
+        });
+
+        // Load user data from Firestore
+        function loadUserData() {
+            db.collection('users').doc(currentUser.uid).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        userNameElement.textContent = userData.name || userData.email;
+                    }
+                });
+        }
+
+        // Load plan from Firestore
+        function loadPlan(planId) {
+            db.collection('plans').doc(planId).onSnapshot((doc) => {
+                if (doc.exists) {
+                    currentPlan = doc.data();
+                    renderPlanDetails();
+                } else {
+                    // Plan doesn't exist, redirect to home
+                    window.location.href = 'home.html';
+                }
+            });
+        }
+
+        // Load tasks from Firestore
+        function loadTasks(planId) {
+            db.collection('tasks')
+                .where('planId', '==', planId)
+                .orderBy('createdAt')
+                .onSnapshot((snapshot) => {
+                    tasks = [];
+                    completedTasks = [];
+                    
+                    snapshot.forEach((doc) => {
+                        const task = { id: doc.id, ...doc.data() };
+                        tasks.push(task);
+                        if (task.completed) {
+                            completedTasks.push(task.id);
+                        }
+                    });
+                    
+                    updateProgress();
+                    renderTasks();
+                    renderCharts();
+                });
+        }
+
+        // Render plan details
+        function renderPlanDetails() {
+            if (!currentPlan) return;
+            
+            planTitleElement.textContent = currentPlan.title;
+            planDescriptionElement.textContent = currentPlan.description;
+            planCategoryDurationElement.textContent = `${currentPlan.category} • ${currentPlan.duration}`;
+            
+            // Set difficulty badge
+            const difficulty = currentPlan.difficulty || 'medium';
+            planDifficultyBadge.textContent = getDifficultyText(difficulty);
+            planDifficultyBadge.className = `badge bg-${getDifficultyBadgeColor(difficulty)}`;
+            
+            // Render goals
+            planGoalsElement.innerHTML = '';
+            if (currentPlan.goals && currentPlan.goals.length > 0) {
+                currentPlan.goals.forEach(goal => {
+                    const li = document.createElement('li');
+                    li.textContent = goal;
+                    planGoalsElement.appendChild(li);
+                });
+            }
+            
+            // Render milestones
+            planMilestonesElement.innerHTML = '';
+            if (currentPlan.milestones && currentPlan.milestones.length > 0) {
+                currentPlan.milestones.forEach(milestone => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-6 mb-3';
+                    col.innerHTML = `
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Tuần ${milestone.week}: ${milestone.title}</h6>
+                                <p class="text-muted">${milestone.description}</p>
+                                <div class="progress mt-2" style="height: 5px;">
+                                    <div class="progress-bar" role="progressbar" style="width: ${getMilestoneProgress(milestone.week)}%" 
+                                         aria-valuenow="${getMilestoneProgress(milestone.week)}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    planMilestonesElement.appendChild(col);
+                });
+            }
+            
+            // Enable/disable complete button
+            completePlanBtn.disabled = currentPlan.completed;
+            if (currentPlan.completed) {
+                completePlanBtn.textContent = 'Đã hoàn thành';
+                completePlanBtn.classList.remove('btn-success');
+                completePlanBtn.classList.add('btn-secondary');
+            }
+        }
+
+        // Render tasks
+        function renderTasks() {
+            // Weekly tasks
+            weeklyTasksAccordion.innerHTML = '';
+            if (currentPlan.weeklyTasks && currentPlan.weeklyTasks.length > 0) {
+                currentPlan.weeklyTasks.forEach((weekTasks, idx) => {
+                    const accordionItem = document.createElement('div');
+                    accordionItem.className = 'accordion-item';
+                    
+                    const weekCompleted = isWeekCompleted(weekTasks.week);
+                    
+                    accordionItem.innerHTML = `
+                        <h2 class="accordion-header" id="weeklyHeading${idx}">
+                            <button class="accordion-button ${idx !== 0 ? 'collapsed' : ''}" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#weeklyCollapse${idx}" 
+                                    aria-expanded="${idx === 0 ? 'true' : 'false'}" aria-controls="weeklyCollapse${idx}">
+                                Tuần ${weekTasks.week} ${weekCompleted ? '✅' : ''}
+                            </button>
+                        </h2>
+                        <div id="weeklyCollapse${idx}" class="accordion-collapse collapse ${idx === 0 ? 'show' : ''}" 
+                             aria-labelledby="weeklyHeading${idx}" data-bs-parent="#weeklyTasksAccordion">
+                            <div class="accordion-body">
+                                <ul class="list-group">
+                                    ${weekTasks.tasks.map((task, taskIdx) => `
+                                        <li class="list-group-item task-card ${isTaskCompleted(`week${weekTasks.week}_task${taskIdx}`) ? 'completed-task' : ''}" 
+                                            data-task-id="week${weekTasks.week}_task${taskIdx}" 
+                                            data-task-type="weekly" 
+                                            data-task-week="${weekTasks.week}" 
+                                            data-task-index="${taskIdx}">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>${task}</span>
+                                                ${isTaskCompleted(`week${weekTasks.week}_task${taskIdx}`) ? 
+                                                    '<span class="badge bg-success">Hoàn thành</span>' : 
+                                                    '<button class="btn btn-sm btn-outline-primary report-task-btn">Báo cáo</button>'}
+                                            </div>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                    
+                    weeklyTasksAccordion.appendChild(accordionItem);
+                });
+            }
+            
+            // Daily tasks (only first week)
+            dailyTasksContainer.innerHTML = '';
+            if (currentPlan.dailyTasks && currentPlan.dailyTasks.length > 0) {
+                currentPlan.dailyTasks.forEach(dayTasks => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-6 mb-3';
+                    col.innerHTML = `
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Ngày ${dayTasks.day}</h6>
+                                <ul class="list-group">
+                                    ${dayTasks.tasks.map((task, taskIdx) => `
+                                        <li class="list-group-item task-card ${isTaskCompleted(`day${dayTasks.day}_task${taskIdx}`) ? 'completed-task' : ''}" 
+                                            data-task-id="day${dayTasks.day}_task${taskIdx}" 
+                                            data-task-type="daily" 
+                                            data-task-day="${dayTasks.day}" 
+                                            data-task-index="${taskIdx}">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>${task}</span>
+                                                ${isTaskCompleted(`day${dayTasks.day}_task${taskIdx}`) ? 
+                                                    '<span class="badge bg-success">Hoàn thành</span>' : 
+                                                    '<button class="btn btn-sm btn-outline-primary report-task-btn">Báo cáo</button>'}
+                                            </div>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                    
+                    dailyTasksContainer.appendChild(col);
+                });
+            }
+            
+            // Add event listeners to report buttons
+            document.querySelectorAll('.report-task-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const listItem = btn.closest('li');
+                    openTaskChat(
+                        listItem.dataset.taskId,
+                        listItem.dataset.taskType,
+                        listItem.dataset.taskType === 'weekly' ? listItem.dataset.taskWeek : listItem.dataset.taskDay,
+                        listItem.dataset.taskIndex
+                    );
+                });
+            });
+        }
+
+        // Open task chat modal
+        function openTaskChat(taskId, taskType, timeUnit, taskIndex) {
+            let taskTitle = '';
+            let taskDescription = '';
+            
+            if (taskType === 'weekly') {
+                const weekTasks = currentPlan.weeklyTasks.find(wt => wt.week == timeUnit);
+                if (weekTasks) {
+                    taskTitle = `Tuần ${timeUnit} - Nhiệm vụ ${parseInt(taskIndex) + 1}`;
+                    taskDescription = weekTasks.tasks[taskIndex];
+                }
+            } else {
+                const dayTasks = currentPlan.dailyTasks.find(dt => dt.day == timeUnit);
+                if (dayTasks) {
+                    taskTitle = `Ngày ${timeUnit} - Nhiệm vụ ${parseInt(taskIndex) + 1}`;
+                    taskDescription = dayTasks.tasks[taskIndex];
+                }
+            }
+            
+            currentTask = {
+                id: taskId,
+                type: taskType,
+                timeUnit: timeUnit,
+                index: taskIndex,
+                title: taskTitle,
+                description: taskDescription
+            };
+            
+            taskChatModalTitle.textContent = taskTitle;
+            chatMessagesElement.innerHTML = '';
+            chatInputElement.value = '';
+            
+            // Load previous messages for this task if any
+            const taskDoc = tasks.find(t => t.taskId === taskId);
+            if (taskDoc && taskDoc.messages) {
+                taskDoc.messages.forEach(msg => {
+                    addMessageToChat(msg.sender, msg.text, msg.timestamp?.toDate(), msg.imageUrl);
+                });
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('taskChatModal'));
+            modal.show();
+        }
+
+        // Send message in chat
+        sendMessageBtn.addEventListener('click', sendMessage);
+        chatInputElement.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        function sendMessage() {
+            const messageText = chatInputElement.value.trim();
+            if (!messageText && !imageUploadElement.files[0]) return;
+            
+            // Add user message to chat
+            addMessageToChat('user', messageText, new Date());
+            chatInputElement.value = '';
+            
+            // In a real app, you would upload the image to Firebase Storage if present
+            // For simplicity, we'll just simulate AI response
+            simulateAIResponse();
+            
+            // Save task progress to Firestore
+            saveTaskProgress(messageText);
+        }
+
+        // Cancel task
+        cancelTaskBtn.addEventListener('click', () => {
+            if (confirm('Bạn có chắc chắn muốn hủy nhiệm vụ này?')) {
+                // In a real app, you would update the task in Firestore
+                // For now, we'll just simulate it
+                alert('Nhiệm vụ đã được hủy');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('taskChatModal'));
+                modal.hide();
+            }
+        });
+
+        // Complete plan
+        completePlanBtn.addEventListener('click', () => {
+            if (confirm('Bạn có chắc chắn muốn đánh dấu kế hoạch này là hoàn thành?')) {
+                db.collection('plans').doc(currentPlanId).update({
+                    completed: true,
+                    completedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    completePlanBtn.textContent = 'Đã hoàn thành';
+                    completePlanBtn.disabled = true;
+                    completePlanBtn.classList.remove('btn-success');
+                    completePlanBtn.classList.add('btn-secondary');
+                });
+            }
+        });
+
+        // Image upload
+        imageUploadElement.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                // In a real app, you would upload the image here
+                // For now, we'll just display a message
+                addMessageToChat('user', 'Đã gửi hình ảnh', new Date(), URL.createObjectURL(e.target.files[0]));
+                imageUploadElement.value = '';
+                
+                // Simulate AI response to image
+                setTimeout(() => {
+                    addMessageToChat('ai', 'Cảm ơn bạn đã gửi hình ảnh. Tôi đã xem xét và thấy rằng...', new Date());
+                }, 1500);
+            }
+        });
+
+        // Add message to chat UI
+        function addMessageToChat(sender, text, timestamp, imageUrl = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = sender === 'user' ? 'user-message' : 'ai-message';
+            
+            if (imageUrl) {
+                messageDiv.innerHTML = `
+                    <div class="mb-2">
+                        <img src="${imageUrl}" style="max-width: 100%; border-radius: 5px;">
+                    </div>
+                    ${text ? `<p class="mb-0">${text}</p>` : ''}
+                    <small class="text-muted d-block text-end">${formatTime(timestamp)}</small>
+                `;
+            } else if (text) {
+                messageDiv.innerHTML = `
+                    <p class="mb-0">${text}</p>
+                    <small class="text-muted d-block text-end">${formatTime(timestamp)}</small>
+                `;
+            }
+            
+            chatMessagesElement.appendChild(messageDiv);
+            chatMessagesElement.scrollTop = chatMessagesElement.scrollHeight;
+        }
+
+        // Simulate AI response
+        function simulateAIResponse() {
+            setTimeout(() => {
+                const responses = [
+                    "Cảm ơn bạn đã báo cáo. Tiến độ của bạn rất tốt!",
+                    "Tôi đã xem xét báo cáo của bạn. Bạn có thể cải thiện bằng cách...",
+                    "Báo cáo của bạn cho thấy bạn đang đi đúng hướng. Tiếp tục phát huy nhé!",
+                    "Dựa trên báo cáo, tôi đề xuất bạn nên tập trung vào...",
+                    "Bạn đã hoàn thành nhiệm vụ này xuất sắc! Tôi sẽ đánh dấu nó là hoàn thành."
+                ];
+                
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                addMessageToChat('ai', randomResponse, new Date());
+                
+                // Randomly mark task as completed (simulation)
+                if (Math.random() > 0.5) {
+                    setTimeout(() => {
+                        addMessageToChat('ai', "Dựa trên báo cáo của bạn, tôi sẽ đánh dấu nhiệm vụ này là hoàn thành.", new Date());
+                        
+                        // In a real app, you would update the task in Firestore
+                        // For now, we'll just simulate it
+                        if (!completedTasks.includes(currentTask.id)) {
+                            completedTasks.push(currentTask.id);
+                            updateProgress();
+                            renderTasks();
+                        }
+                    }, 1000);
+                }
+            }, 1500);
+        }
+
+        // Save task progress to Firestore
+        function saveTaskProgress(messageText) {
+            const taskRef = db.collection('tasks').doc(`${currentPlanId}_${currentTask.id}`);
+            
+            // Get existing task or create new
+            taskRef.get().then((doc) => {
+                const message = {
+                    sender: 'user',
+                    text: messageText,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                if (doc.exists) {
+                    // Update existing task
+                    taskRef.update({
+                        messages: firebase.firestore.FieldValue.arrayUnion(message),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    // Create new task
+                    taskRef.set({
+                        planId: currentPlanId,
+                        taskId: currentTask.id,
+                        taskType: currentTask.type,
+                        taskTitle: currentTask.title,
+                        taskDescription: currentTask.description,
+                        userId: currentUser.uid,
+                        completed: false,
+                        messages: [message],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            });
+        }
+
+        // Update progress
+        function updateProgress() {
+            if (!currentPlan) return;
+            
+            // Calculate progress based on completed tasks
+            let totalTasks = 0;
+            let completedCount = 0;
+            
+            // Count weekly tasks
+            if (currentPlan.weeklyTasks) {
+                currentPlan.weeklyTasks.forEach(week => {
+                    week.tasks.forEach((_, idx) => {
+                        totalTasks++;
+                        if (completedTasks.includes(`week${week.week}_task${idx}`)) {
+                            completedCount++;
+                        }
+                    });
+                });
+            }
+            
+            // Count daily tasks (only first week)
+            if (currentPlan.dailyTasks) {
+                currentPlan.dailyTasks.forEach(day => {
+                    day.tasks.forEach((_, idx) => {
+                        totalTasks++;
+                        if (completedTasks.includes(`day${day.day}_task${idx}`)) {
+                            completedCount++;
+                        }
+                    });
+                });
+            }
+            
+            const progress = totalTasks > 0 ? completedCount / totalTasks : 0;
+            const progressPercentage = Math.round(progress * 100);
+            
+            progressPercentageElement.textContent = `${progressPercentage}%`;
+            planProgressBar.style.width = `${progressPercentage}%`;
+            planProgressBar.setAttribute('aria-valuenow', progressPercentage);
+            
+            // Update progress in Firestore
+            if (currentPlan.progress !== progress) {
+                db.collection('plans').doc(currentPlanId).update({
+                    progress: progress
+                });
+            }
+        }
+
+        // Render charts
+        function renderCharts() {
+            // Destroy existing charts if they exist
+            if (tasksChart) tasksChart.destroy();
+            if (weeklyProgressChart) weeklyProgressChart.destroy();
+            
+            // Tasks completion chart
+            const ctx1 = document.getElementById('tasksChart').getContext('2d');
+            tasksChart = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Hoàn thành', 'Chưa hoàn thành'],
+                    datasets: [{
+                        data: [completedTasks.length, tasks.length - completedTasks.length],
+                        backgroundColor: [
+                            '#28a745',
+                            '#dc3545'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+            
+            // Weekly progress chart (if weekly tasks exist)
+            if (currentPlan.weeklyTasks) {
+                const weeklyData = currentPlan.weeklyTasks.map(week => {
+                    const weekTasks = week.tasks.length;
+                    const weekCompleted = week.tasks.reduce((count, _, idx) => {
+                        return count + (completedTasks.includes(`week${week.week}_task${idx}`) ? 1 : 0);
+                    }, 0);
+                    return {
+                        week: week.week,
+                        completed: weekCompleted,
+                        total: weekTasks
+                    };
+                });
+                
+                const ctx2 = document.getElementById('weeklyProgressChart').getContext('2d');
+                weeklyProgressChart = new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels: weeklyData.map(w => `Tuần ${w.week}`),
+                        datasets: [
+                            {
+                                label: 'Hoàn thành',
+                                data: weeklyData.map(w => w.completed),
+                                backgroundColor: '#28a745'
+                            },
+                            {
+                                label: 'Tổng số',
+                                data: weeklyData.map(w => w.total),
+                                backgroundColor: '#6c757d'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                stacked: true
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Helper functions
+        function isTaskCompleted(taskId) {
+            return completedTasks.includes(taskId);
+        }
+
+        function isWeekCompleted(week) {
+            if (!currentPlan.weeklyTasks) return false;
+            
+            const weekTasks = currentPlan.weeklyTasks.find(wt => wt.week == week);
+            if (!weekTasks) return false;
+            
+            return weekTasks.tasks.every((_, idx) => 
+                completedTasks.includes(`week${week}_task${idx}`)
+            );
+        }
+
+        function getMilestoneProgress(week) {
+            if (!currentPlan.weeklyTasks) return 0;
+            
+            const weekTasks = currentPlan.weeklyTasks.find(wt => wt.week == week);
+            if (!weekTasks) return 0;
+            
+            const completed = weekTasks.tasks.reduce((count, _, idx) => {
+                return count + (completedTasks.includes(`week${week}_task${idx}`) ? 1 : 0);
+            }, 0);
+            
+            return weekTasks.tasks.length > 0 ? Math.round((completed / weekTasks.tasks.length) * 100) : 0;
+        }
+
+        function getDifficultyText(difficulty) {
+            switch (difficulty) {
+                case 'easy': return 'Dễ';
+                case 'medium': return 'Trung bình';
+                case 'hard': return 'Khó';
+                default: return 'Trung bình';
+            }
+        }
+
+        function getDifficultyBadgeColor(difficulty) {
+            switch (difficulty) {
+                case 'easy': return 'success';
+                case 'medium': return 'warning';
+                case 'hard': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        function formatTime(date) {
+            if (!date) return '';
+            return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatDate(date) {
+            if (!date) return '';
+            return date.toLocaleDateString('vi-VN');
+        }
+    </script>
+</body>
+</html>
