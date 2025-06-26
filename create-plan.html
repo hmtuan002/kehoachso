@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kế hoạch số - Tạo kế hoạch mới</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .plan-form-container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .preview-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px dashed #ccc;
+        }
+        .milestone-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #0d6efd;
+        }
+        .task-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 3px;
+            font-size: 0.9rem;
+        }
+        .task-completed {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">Kế hoạch số</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="username-display"></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-btn">Đăng xuất</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="plan-form-container">
+            <h2 class="text-center mb-4">Tạo kế hoạch học tập mới</h2>
+            
+            <form id="plan-form">
+                <div class="mb-3">
+                    <label for="plan-title" class="form-label">Tiêu đề kế hoạch</label>
+                    <input type="text" class="form-control" id="plan-title" required placeholder="Ví dụ: Học JavaScript trong 2 tháng">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="plan-description" class="form-label">Mô tả kế hoạch</label>
+                    <textarea class="form-control" id="plan-description" rows="3" required 
+                        placeholder="Mô tả chi tiết những gì bạn muốn đạt được..."></textarea>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="plan-category" class="form-label">Lĩnh vực</label>
+                        <select class="form-select" id="plan-category" required>
+                            <option value="" selected disabled>Chọn lĩnh vực</option>
+                            <option value="programming">Lập trình</option>
+                            <option value="language">Ngoại ngữ</option>
+                            <option value="math">Toán học</option>
+                            <option value="science">Khoa học</option>
+                            <option value="business">Kinh doanh</option>
+                            <option value="art">Nghệ thuật</option>
+                            <option value="other">Khác</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="plan-duration" class="form-label">Thời gian thực hiện</label>
+                        <select class="form-select" id="plan-duration">
+                            <option value="1 week">1 tuần</option>
+                            <option value="2 weeks">2 tuần</option>
+                            <option value="1 month">1 tháng</option>
+                            <option value="2 months" selected>2 tháng</option>
+                            <option value="3 months">3 tháng</option>
+                            <option value="6 months">6 tháng</option>
+                            <option value="unknown">Chưa biết (AI sẽ đề xuất)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Mức độ cam kết</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="commitment" id="commitment-low" value="low">
+                        <label class="form-check-label" for="commitment-low">Thấp (1-2 giờ/tuần)</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="commitment" id="commitment-medium" value="medium" checked>
+                        <label class="form-check-label" for="commitment-medium">Trung bình (3-5 giờ/tuần)</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="commitment" id="commitment-high" value="high">
+                        <label class="form-check-label" for="commitment-high">Cao (6+ giờ/tuần)</label>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-lg">Tạo kế hoạch với AI</button>
+                </div>
+            </form>
+            
+            <div class="loading-spinner" id="loading-spinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">AI đang tạo kế hoạch cho bạn...</p>
+            </div>
+            
+            <div class="preview-container hidden" id="preview-container">
+                <h4 class="mb-3">Xem trước kế hoạch</h4>
+                <div id="plan-preview"></div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <button class="btn btn-outline-secondary" id="edit-plan-btn">Chỉnh sửa</button>
+                    <button class="btn btn-success" id="save-plan-btn">Lưu kế hoạch</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase and other scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Your Firebase configuration (same as index.html)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM elements
+        const usernameDisplay = document.getElementById('username-display');
+        const logoutBtn = document.getElementById('logout-btn');
+        const planForm = document.getElementById('plan-form');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const previewContainer = document.getElementById('preview-container');
+        const planPreview = document.getElementById('plan-preview');
+        const editPlanBtn = document.getElementById('edit-plan-btn');
+        const savePlanBtn = document.getElementById('save-plan-btn');
+        
+        let generatedPlan = null;
+
+        // Auth state listener
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                usernameDisplay.textContent = user.displayName || user.email;
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            auth.signOut();
+        });
+
+        // Plan form submission
+        planForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('plan-title').value;
+            const description = document.getElementById('plan-description').value;
+            const category = document.getElementById('plan-category').value;
+            const duration = document.getElementById('plan-duration').value;
+            const commitment = document.querySelector('input[name="commitment"]:checked').value;
+            
+            // Show loading spinner
+            planForm.classList.add('hidden');
+            loadingSpinner.style.display = 'block';
+            
+            try {
+                // Call Gemini API to generate plan
+                generatedPlan = await generatePlanWithAI({
+                    title,
+                    description,
+                    category,
+                    duration,
+                    commitment
+                });
+                
+                // Display the generated plan
+                displayPlanPreview(generatedPlan);
+                
+                // Hide loading spinner and show preview
+                loadingSpinner.style.display = 'none';
+                previewContainer.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error generating plan:', error);
+                alert('Có lỗi xảy ra khi tạo kế hoạch: ' + error.message);
+                
+                // Reset form
+                loadingSpinner.style.display = 'none';
+                planForm.classList.remove('hidden');
+            }
+        });
+
+        // Edit plan button
+        editPlanBtn.addEventListener('click', () => {
+            previewContainer.classList.add('hidden');
+            planForm.classList.remove('hidden');
+        });
+
+        // Save plan button
+        savePlanBtn.addEventListener('click', async () => {
+            if (!generatedPlan || !auth.currentUser) return;
+            
+            try {
+                // Add user ID and timestamp to the plan
+                generatedPlan.userId = auth.currentUser.uid;
+                generatedPlan.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                generatedPlan.status = 'in-progress';
+                
+                // Save to Firestore
+                await db.collection('plans').add(generatedPlan);
+                
+                alert('Kế hoạch đã được lưu thành công!');
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Error saving plan:', error);
+                alert('Có lỗi xảy ra khi lưu kế hoạch: ' + error.message);
+            }
+        });
+
+        // Function to call Gemini API
+        async function generatePlanWithAI(planData) {
+            // In a real app, you would call your backend which calls Gemini API
+            // For this example, we'll simulate the response with a realistic plan structure
+            
+            // This is where you would normally call the Gemini API
+            // const response = await fetch('YOUR_BACKEND_ENDPOINT', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //         'Authorization': 'Bearer YOUR_API_KEY'
+            //     },
+            //     body: JSON.stringify(planData)
+            // });
+            // const data = await response.json();
+            // return data;
+            
+            // Simulated response (in a real app, this would come from Gemini API)
+            return simulateGeminiResponse(planData);
+        }
+
+        // Function to display the generated plan
+        function displayPlanPreview(plan) {
+            planPreview.innerHTML = `
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">${plan.title}</h5>
+                        <p class="card-text">${plan.description}</p>
+                        <div class="d-flex justify-content-between">
+                            <span class="badge bg-primary">${plan.category}</span>
+                            <span class="badge bg-${plan.difficulty === 'easy' ? 'success' : plan.difficulty === 'medium' ? 'warning' : 'danger'}">
+                                ${plan.difficulty === 'easy' ? 'Dễ' : plan.difficulty === 'medium' ? 'Trung bình' : 'Khó'}
+                            </span>
+                            <span class="badge bg-info">${plan.duration}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <h5 class="mb-3">Các mốc quan trọng</h5>
+                ${plan.milestones.map((milestone, index) => `
+                    <div class="milestone-item">
+                        <h6>Mốc ${index + 1}: ${milestone.title}</h6>
+                        <p class="small text-muted">${milestone.description}</p>
+                        <p class="small"><strong>Thời gian:</strong> ${milestone.timeframe}</p>
+                        
+                        <h6 class="mt-2">Nhiệm vụ hàng tuần</h6>
+                        ${milestone.weeklyTasks.map(task => `
+                            <div class="task-item">
+                                <input class="form-check-input me-2" type="checkbox" disabled>
+                                ${task}
+                            </div>
+                        `).join('')}
+                    </div>
+                `).join('')}
+                
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h5>Mục tiêu hàng ngày</h5>
+                    <ul>
+                        ${plan.dailyGoals.map(goal => `<li>${goal}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        // Simulated Gemini response (in a real app, this would come from the API)
+        function simulateGeminiResponse(planData) {
+            const difficulty = Math.random() < 0.3 ? 'easy' : Math.random() < 0.6 ? 'medium' : 'hard';
+            const duration = planData.duration === 'unknown' ? 
+                (difficulty === 'easy' ? '1 tháng' : difficulty === 'medium' ? '2 tháng' : '3 tháng') : 
+                planData.duration;
+            
+            // Generate milestones based on duration and difficulty
+            const milestoneCount = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 4 : 5;
+            const milestones = [];
+            
+            for (let i = 0; i < milestoneCount; i++) {
+                const weekNum = i + 1;
+                const weekDuration = duration.includes('tuần') ? 
+                    `Tuần ${weekNum}` : 
+                    `Tuần ${weekNum * 2}-${weekNum * 2 + 1}`;
+                
+                milestones.push({
+                    title: `Mốc ${i + 1}: ${getMilestoneTitle(planData.category, i)}`,
+                    description: getMilestoneDescription(planData.category, i),
+                    timeframe: weekDuration,
+                    completed: false,
+                    weeklyTasks: generateWeeklyTasks(planData.category, i, difficulty)
+                });
+            }
+            
+            // Generate daily goals
+            const dailyGoals = generateDailyGoals(planData.category, difficulty, planData.commitment);
+            
+            return {
+                title: planData.title,
+                description: planData.description,
+                category: planData.category,
+                duration: duration,
+                difficulty: difficulty,
+                milestones: milestones,
+                dailyGoals: dailyGoals,
+                resources: generateResources(planData.category)
+            };
+        }
+
+        // Helper functions for simulated response
+        function getMilestoneTitle(category, index) {
+            const titles = {
+                programming: [
+                    "Làm quen với cú pháp cơ bản",
+                    "Xây dựng ứng dụng nhỏ",
+                    "Hiểu về thuật toán cơ bản",
+                    "Làm việc với dữ liệu",
+                    "Xây dựng dự án hoàn chỉnh"
+                ],
+                language: [
+                    "Học từ vựng cơ bản",
+                    "Ngữ pháp cơ bản",
+                    "Giao tiếp hàng ngày",
+                    "Kỹ năng đọc hiểu",
+                    "Thuyết trình và viết luận"
+                ],
+                math: [
+                    "Khái niệm cơ bản",
+                    "Giải phương trình",
+                    "Hình học cơ bản",
+                    "Đại số nâng cao",
+                    "Giải tích"
+                ],
+                science: [
+                    "Khái niệm cơ bản",
+                    "Thí nghiệm đơn giản",
+                    "Phương pháp nghiên cứu",
+                    "Phân tích dữ liệu",
+                    "Báo cáo khoa học"
+                ],
+                business: [
+                    "Khái niệm cơ bản",
+                    "Phân tích thị trường",
+                    "Kế hoạch kinh doanh",
+                    "Tiếp thị cơ bản",
+                    "Quản lý tài chính"
+                ],
+                art: [
+                    "Kỹ thuật cơ bản",
+                    "Bố cục và màu sắc",
+                    "Phong cách cá nhân",
+                    "Dự án sáng tạo",
+                    "Triển lãm ảo"
+                ],
+                other: [
+                    "Giai đoạn khởi đầu",
+                    "Xây dựng nền tảng",
+                    "Phát triển kỹ năng",
+                    "Áp dụng thực tế",
+                    "Hoàn thiện chuyên môn"
+                ]
+            };
+            
+            return titles[category][index] || titles.other[index];
+        }
+
+        function getMilestoneDescription(category, index) {
+            const descriptions = {
+                programming: [
+                    "Học các khái niệm cơ bản như biến, hàm, vòng lặp và cấu trúc điều kiện.",
+                    "Áp dụng kiến thức đã học để xây dựng một ứng dụng nhỏ như máy tính hoặc danh sách công việc.",
+                    "Hiểu và triển khai các thuật toán cơ bản như tìm kiếm, sắp xếp và đệ quy.",
+                    "Làm việc với cơ sở dữ liệu và API để xử lý dữ liệu.",
+                    "Kết hợp tất cả kiến thức để xây dựng một dự án hoàn chỉnh từ đầu đến cuối."
+                ],
+                language: [
+                    "Học 200-300 từ vựng cơ bản về các chủ đề hàng ngày như gia đình, công việc và sở thích.",
+                    "Nắm vững các cấu trúc ngữ pháp cơ bản để xây dựng câu đơn giản.",
+                    "Thực hành các tình huống giao tiếp hàng ngày như chào hỏi, mua sắm và hỏi đường.",
+                    "Đọc hiểu các văn bản ngắn và trả lời câu hỏi về nội dung.",
+                    "Trình bày ý kiến và viết các bài luận ngắn về chủ đề quen thuộc."
+                ],
+                // ... similar descriptions for other categories
+                other: [
+                    "Làm quen với các khái niệm và thuật ngữ cơ bản trong lĩnh vực này.",
+                    "Xây dựng nền tảng kiến thức vững chắc để phát triển kỹ năng.",
+                    "Áp dụng kiến thức vào các tình huống thực tế để phát triển kỹ năng.",
+                    "Thực hành nâng cao với các dự án và tình huống phức tạp hơn.",
+                    "Tổng hợp và hoàn thiện tất cả kiến thức đã học trong một dự án cuối khóa."
+                ]
+            };
+            
+            return descriptions[category][index] || descriptions.other[index];
+        }
+
+        function generateWeeklyTasks(category, milestoneIndex, difficulty) {
+            const taskCount = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 4 : 5;
+            const tasks = [];
+            
+            for (let i = 0; i < taskCount; i++) {
+                tasks.push(getWeeklyTask(category, milestoneIndex, i));
+            }
+            
+            return tasks;
+        }
+
+        function getWeeklyTask(category, milestoneIndex, taskIndex) {
+            const taskTemplates = {
+                programming: [
+                    "Hoàn thành %d bài tập về %s",
+                    "Xem %d video hướng dẫn về %s",
+                    "Đọc chương %d về %s",
+                    "Viết mã cho %s",
+                    "Gỡ lỗi %s"
+                ],
+                language: [
+                    "Học %d từ mới về %s",
+                    "Thực hành %d đoạn hội thoại về %s",
+                    "Nghe %d podcast về %s",
+                    "Viết %d đoạn văn về %s",
+                    "Đọc %d bài báo về %s"
+                ],
+                // ... similar for other categories
+                other: [
+                    "Nghiên cứu về %s",
+                    "Thực hành %s",
+                    "Hoàn thành bài tập về %s",
+                    "Xem video hướng dẫn về %s",
+                    "Đọc tài liệu về %s"
+                ]
+            };
+            
+            const template = taskTemplates[category] || taskTemplates.other;
+            const randomTemplate = template[taskIndex % template.length];
+            const topic = getMilestoneTitle(category, milestoneIndex).toLowerCase();
+            
+            return randomTemplate.replace('%d', (taskIndex + 1).toString())
+                               .replace('%s', topic);
+        }
+
+        function generateDailyGoals(category, difficulty, commitment) {
+            const goalCount = commitment === 'low' ? 2 : commitment === 'medium' ? 3 : 4;
+            const goals = [];
+            
+            for (let i = 0; i < goalCount; i++) {
+                goals.push(getDailyGoal(category, difficulty, i));
+            }
+            
+            return goals;
+        }
+
+        function getDailyGoal(category, difficulty, index) {
+            const goalTemplates = {
+                programming: [
+                    "Dành 30 phút đọc tài liệu về %s",
+                    "Hoàn thành 1 bài tập lập trình",
+                    "Xem 1 video hướng dẫn về %s",
+                    "Viết mã cho 1 tính năng nhỏ",
+                    "Gỡ lỗi 1 vấn đề trong mã"
+                ],
+                language: [
+                    "Học 5 từ mới về %s",
+                    "Thực hành phát âm 10 phút",
+                    "Nghe 1 podcast ngắn",
+                    "Viết 1 đoạn văn ngắn",
+                    "Đọc 1 bài báo ngắn"
+                ],
+                // ... similar for other categories
+                other: [
+                    "Dành 30 phút nghiên cứu về %s",
+                    "Thực hành kỹ năng 20 phút",
+                    "Đọc tài liệu hướng dẫn",
+                    "Xem video giới thiệu",
+                    "Làm bài tập nhỏ"
+                ]
+            };
+            
+            const template = goalTemplates[category] || goalTemplates.other;
+            const randomTemplate = template[index % template.length];
+            const topic = getMilestoneTitle(category, 0).toLowerCase();
+            
+            return randomTemplate.replace('%s', topic);
+        }
+
+        function generateResources(category) {
+            const resources = {
+                programming: [
+                    "MDN Web Docs",
+                    "freeCodeCamp",
+                    "Codecademy",
+                    "LeetCode",
+                    "GitHub Learning Lab"
+                ],
+                language: [
+                    "Duolingo",
+                    "Memrise",
+                    "BBC Learning English",
+                    "TED Talks",
+                    "Lang-8"
+                ],
+                // ... similar for other categories
+                other: [
+                    "Coursera",
+                    "Khan Academy",
+                    "edX",
+                    "Udemy",
+                    "YouTube Education"
+                ]
+            };
+            
+            return resources[category] || resources.other;
+        }
+    </script>
+</body>
+</html>
